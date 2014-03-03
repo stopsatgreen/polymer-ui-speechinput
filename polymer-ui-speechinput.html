@@ -9,24 +9,33 @@
 	</template>
 	<script>
 		Polymer('polymer-ui-speechinput', {
+			// Only one attribute for now - will consider more
 			language: 'en-GB',
 			ready: function() {
+				// A global object for flagging when recognition / listening is taking place
 				var recognizing = false;
+				// Only in Chrome for now
 				if('webkitSpeechRecognition' in window) {
 					var speechElement = this.$.speechElement,
 						speechButton = this.$.speechButton,
 						speechResult = this.$.speechResult,
+						// Set up control variables
 						finalResult = '',
 						language = this.language,
-						recognition = new webkitSpeechRecognition(),
-						recognizeClass = 'listening';
+						recognizeClass = 'listening',
+						// Create Speech Recognition object
+						recognition = new webkitSpeechRecognition();
+					// This function’s only used once, but I’ve created it anyway as it may come in handy in the future
 					function recognizeStart() {
+						// Add a class to the parent element for styling
 						speechElement.classList.add(recognizeClass);
+						// Disable the elements while listening is taking place
 						speechButton.setAttribute('disabled','true');
 						speechResult.setAttribute('disabled','true');
 						recognizing = true;
 					}
 					function recognizeStop() {
+						// Removes the styling class and re-enables elements
 						speechElement.classList.remove(recognizeClass);
 						speechButton.removeAttribute('disabled');
 		  				speechResult.removeAttribute('disabled');
@@ -35,6 +44,7 @@
 					recognition.addEventListener('start', recognizeStart);
 					recognition.addEventListener('end', recognizeStop);
 		  			recognition.onresult = function(event) {
+		  				// Speech recognition can constantly update results in some circumstances, so this is a failsafe that looks out for the one that’s marked as final
 		  				for (var i = event.resultIndex; i < event.results.length; ++i) {
 		      				if (event.results[i].isFinal) {
 		        				finalResult += event.results[i][0].transcript;
@@ -44,13 +54,16 @@
 		  				recognizeStop();
 		  			}
 		  			recognition.onerror = function() {
+		  				// TODO: Add proper error handling
 		  				window.alert('Sorry, something went wrong');
 		  			}
 		  			speechButton.addEventListener('click', function() {
+		  				// Shouldn’t be possible to click again while listening is happening, but better safe than sorry
 		  				if (recognizing) {
 			    			recognizeStop();
 			    			return;
   						}
+  						// Reset any previous results and start again
   						finalResult = '';
   						speechResult.value = finalResult;
 		  				recognition.lang = this.language;
