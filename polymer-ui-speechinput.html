@@ -1,0 +1,65 @@
+<link rel="import" href="../polymer/bower_components/polymer/polymer.html">
+
+<polymer-element name="polymer-ui-speechinput" attributes="language">
+	<template>
+		<div id="speechElement">
+			<button id="speechButton">Speak</button>
+			<input type="text" id="speechResult">
+		</div>
+	</template>
+	<script>
+		Polymer('polymer-ui-speechinput', {
+			language: 'en-GB',
+			ready: function() {
+				var recognizing = false;
+				if('webkitSpeechRecognition' in window) {
+					var speechElement = this.$.speechElement,
+						speechButton = this.$.speechButton,
+						speechResult = this.$.speechResult,
+						finalResult = '',
+						language = this.language,
+						recognition = new webkitSpeechRecognition(),
+						recognizeClass = 'listening';
+					function recognizeStart() {
+						speechElement.classList.add(recognizeClass);
+						speechButton.setAttribute('disabled','true');
+						speechResult.setAttribute('disabled','true');
+						recognizing = true;
+					}
+					function recognizeStop() {
+						speechElement.classList.remove(recognizeClass);
+						speechButton.removeAttribute('disabled');
+		  				speechResult.removeAttribute('disabled');
+		  				recognizing = false;
+					}
+					recognition.addEventListener('start', recognizeStart);
+					recognition.addEventListener('end', recognizeStop);
+		  			recognition.onresult = function(event) {
+		  				for (var i = event.resultIndex; i < event.results.length; ++i) {
+		      				if (event.results[i].isFinal) {
+		        				finalResult += event.results[i][0].transcript;
+		      				}
+		    			}
+		    			speechResult.value = finalResult;
+		  				recognizeStop();
+		  			}
+		  			recognition.onerror = function() {
+		  				window.alert('Sorry, something went wrong');
+		  			}
+		  			speechButton.addEventListener('click', function() {
+		  				if (recognizing) {
+			    			recognizeStop();
+			    			return;
+  						}
+  						finalResult = '';
+  						speechResult.value = finalResult;
+		  				recognition.lang = this.language;
+		  				recognition.start();
+		  			});
+				} else {
+					window.alert('Speech recognition not present')
+				}
+			}      			
+  		});
+	</script>
+</polymer-element>
